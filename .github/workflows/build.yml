@@ -6,11 +6,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest]
         build_type: [Release]
         enable_ui: [on]
         include:
-          - os: ubuntu-latest
+          - os: windows-latest
             build_type: Release
             enable_ui: on
     steps:
@@ -25,10 +25,6 @@ jobs:
     - uses: seanmiddleditch/gha-setup-ninja@master
     - uses: ilammy/msvc-dev-cmd@v1
       if: runner.os == 'Windows'
-    - name: Workaround for windows-2022 and cmake 3.25.0
-      if: runner.os == 'Windows'
-      shell: bash
-      run: rm -rf C:/Strawberry/
     - name: Install Dependencies
       shell: bash
       run: |
@@ -45,24 +41,16 @@ jobs:
         else
           export enable_ccache=on
         fi
+        curl -L https://github.com/blueloveTH/aseprite/releases/download/v0.01/skia.zip --output skia.zip
+        7z x skia.zip
         cmake -S . -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
-          -DENABLE_TESTS=ON \
           -DENABLE_UI=${{ matrix.enable_ui }} \
-          -DENABLE_CCACHE=$enable_ccache
-        cmake \                                     
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DCMAKE_OSX_ARCHITECTURES=arm64 \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
-          -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
+          -DENABLE_CCACHE=$enable_ccache \
           -DLAF_BACKEND=skia \
-          -DSKIA_DIR=/Users/fredshao/moeifstudio/projects/tests/Skia-macOS-Release-arm64 \
-          -DSKIA_LIBRARY_DIR=/Users/fredshao/moeifstudio/projects/tests/Skia-macOS-Release-arm64/out/Release-arm64 \
-          -DSKIA_LIBRARY=/Users/fredshao/moeifstudio/projects/tests/Skia-macOS-Release-arm64/out/Release-arm64/libskia.a \
-          -G Ninja \
-          ..
-          ninja aseprite  
+          -DSKIA_DIR=./skia \
+          -DSKIA_LIBRARY_DIR=./skia/out/Release-x64 \
+          -DSKIA_LIBRARY=./skia/out/Release-x64/skia.lib
     - name: Compiling
       shell: bash
       run: |
@@ -73,4 +61,3 @@ jobs:
         path: |
           D:/a/aseprite/aseprite/build/bin/data
           D:/a/aseprite/aseprite/build/bin/aseprite.exe
-\
